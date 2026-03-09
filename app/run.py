@@ -9,7 +9,7 @@ from pathlib import Path
 
 DEFAULT_PORT = 8023
 FALLBACK_PORTS = [8024, 8025, 8026, 8080, 9000]
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"  # must be 0.0.0.0 so HA Supervisor ingress proxy can reach the container
 DATA_DIR = Path(os.getenv("PDU_GUARD_DATA_DIR", "/data"))
 
 
