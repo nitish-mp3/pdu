@@ -275,7 +275,7 @@ async function requestJson(url, options) {
 
 async function loadOverview() {
     try {
-        const payload = await requestJson("/api/overview");
+        const payload = await requestJson("api/overview");
         renderSummary(payload.summary);
         renderDevices(payload.devices);
         renderHistory(payload.history);
@@ -318,7 +318,7 @@ async function confirmAndSendCommand(outletId, action, outletName) {
 
     await withBusyState(async () => {
         setStatus("Sending " + action + "\u2026");
-        const result = await requestJson("/api/outlets/" + outletId + "/command", {
+        const result = await requestJson("api/outlets/" + outletId + "/command", {
             method: "POST",
             body: JSON.stringify({ action }),
         });
@@ -337,7 +337,7 @@ async function confirmAndSetLock(outletId, locked, outletName) {
 
     await withBusyState(async () => {
         setStatus(locked ? "Locking outlet\u2026" : "Unlocking outlet\u2026");
-        const result = await requestJson("/api/outlets/" + outletId + "/lock", {
+        const result = await requestJson("api/outlets/" + outletId + "/lock", {
             method: "POST",
             body: JSON.stringify({ locked }),
         });
@@ -351,7 +351,7 @@ async function confirmAndSetLock(outletId, locked, outletName) {
 discoverButton.addEventListener("click", async () => {
     await withBusyState(async () => {
         setStatus("Scanning local networks for compatible PDUs\u2026");
-        await requestJson("/api/devices/discover", { method: "POST" });
+        await requestJson("api/devices/discover", { method: "POST" });
         showToast("Discovery scan complete.", "success");
         await loadOverview();
     });

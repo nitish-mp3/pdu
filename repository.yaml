@@ -6,7 +6,7 @@ addons:
   - slug: pdu_outlet_guard
     name: PDU Outlet Guard
     description: Operator-first APC PDU control with discovery, outlet history, and remote-off locks.
-    version: "0.1.3"
+    version: "0.2.0"
     url: https://github.com/nitish-mp3/pdu
     startup: services
     boot: auto

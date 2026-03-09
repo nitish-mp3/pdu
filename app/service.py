@@ -132,6 +132,12 @@ class PDUService:
     def _candidate_hosts(self) -> list[str]:
         hosts: list[str] = []
         seen: set[str] = set()
+
+        for host in self.settings.pdu_hosts:
+            if host and host not in seen:
+                hosts.append(host)
+                seen.add(host)
+
         for interface_addresses in psutil.net_if_addrs().values():
             for address in interface_addresses:
                 if address.family != socket.AF_INET or not address.netmask:
