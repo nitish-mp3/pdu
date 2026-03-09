@@ -4,4 +4,5 @@ SQLAlchemy==2.0.43
 psutil==7.0.0
 pysnmp==4.4.12
 pyasn1==0.4.8
+pyasyncore>=1.0.4
 pycryptodomex==3.23.0
