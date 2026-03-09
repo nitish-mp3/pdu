@@ -51,9 +51,13 @@ class SNMPClient:
     def __init__(self, settings: Settings, host: str, is_configured: bool = False):
         self._settings = settings
         self._host = host
+        self._is_configured = is_configured
         # Configured hosts (from pdu_hosts list) produce WARNING-level SNMP errors so
         # they appear in the add-on log. Scanned hosts use DEBUG to avoid flooding logs.
         self._log_level = logging.WARNING if is_configured else logging.DEBUG
+        # Reuse one engine per client so SNMPv3 engine-discovery (extra round trip)
+        # only happens once instead of on every get_value / set_int call.
+        self._engine = SnmpEngine()
 
     def _auth(self) -> UsmUserData:
         return UsmUserData(
@@ -65,6 +69,14 @@ class SNMPClient:
         )
 
     def _target(self) -> UdpTransportTarget:
+        if self._is_configured:
+            # Explicitly configured hosts get generous timeouts so a single
+            # dropped UDP packet doesn't produce a false negative.
+            return UdpTransportTarget(
+                (self._host, self._settings.snmp_port),
+                timeout=5,
+                retries=2,
+            )
         return UdpTransportTarget(
             (self._host, self._settings.snmp_port),
             timeout=self._settings.discovery_timeout_seconds,
@@ -74,7 +86,7 @@ class SNMPClient:
     def get_value(self, oid: str):
         try:
             iterator = getCmd(
-                SnmpEngine(),
+                self._engine,
                 self._auth(),
                 self._target(),
                 ContextData(),
@@ -119,7 +131,7 @@ class SNMPClient:
     def set_int(self, oid: str, value: int) -> bool:
         try:
             iterator = setCmd(
-                SnmpEngine(),
+                self._engine,
                 self._auth(),
                 self._target(),
                 ContextData(),
@@ -143,7 +155,7 @@ class SNMPClient:
         if not system_description:
             return None
 
-        outlet_one_state = self.get_int(f"{OUTLET_STATE_BASE_OID}.1")
+        outlet_one_state = self.get_int(f"{OUTLET_CONTROL_BASE_OID}.1")
         is_apc_like = "apc" in system_description.lower() or outlet_one_state is not None
         if not is_apc_like:
             return None

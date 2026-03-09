@@ -20,8 +20,8 @@ from snmp import (
     CONTROL_VALUES,
     OUTLET_CONTROL_BASE_OID,
     OUTLET_NAME_BASE_OID,
-    OUTLET_STATE_BASE_OID,
     STATE_VALUES,
+    ProbeResult,
     SNMPClient,
 )
 
@@ -114,34 +114,60 @@ class PDUService:
         if not candidates:
             return
 
-        found = 0
         configured_set = set(self.settings.pdu_hosts)
-        with ThreadPoolExecutor(max_workers=self.settings.scan_workers) as executor:
-            futures = {
-                executor.submit(self._probe_host, host, host in configured_set): host
-                for host in candidates
-            }
-            for future in as_completed(futures):
-                try:
-                    result = future.result()
-                except Exception:
-                    logger.debug("Probe future raised", exc_info=True)
-                    continue
-                if result is None:
-                    continue
+        found = 0
+
+        # ── Phase 1: Probe explicitly configured hosts sequentially ──────
+        # They run alone (no thread pool contention) with generous timeouts
+        # so a single dropped UDP packet can't cause a false negative.
+        for host in self.settings.pdu_hosts:
+            if not host:
+                continue
+            logger.info("Probing configured host %s …", host)
+            result = self._probe_host(host, is_configured=True)
+            if result is not None:
                 found += 1
-                logger.info("Found PDU: %s (%s)", result.system_name, result.host)
-                with session_scope() as session:
-                    device = session.scalar(select(Device).where(Device.host == result.host))
-                    if device is None:
-                        device = Device(host=result.host)
-                        session.add(device)
-                    device.name = result.system_name
-                    device.model = result.system_description
-                    device.status = "online"
-                    device.last_seen_at = utcnow()
-                    self._ensure_outlets(session, device)
+                self._register_device(result)
+            else:
+                logger.warning(
+                    "Configured host %s did not respond — check SNMP credentials, "
+                    "network path, and that SNMPv3 is enabled on the device.",
+                    host,
+                )
+
+        # ── Phase 2: Scan remaining subnet hosts in a thread pool ────────
+        remaining = [h for h in candidates if h not in configured_set]
+        if remaining:
+            with ThreadPoolExecutor(max_workers=self.settings.scan_workers) as executor:
+                futures = {
+                    executor.submit(self._probe_host, host, False): host
+                    for host in remaining
+                }
+                for future in as_completed(futures):
+                    try:
+                        result = future.result()
+                    except Exception:
+                        logger.debug("Probe future raised", exc_info=True)
+                        continue
+                    if result is None:
+                        continue
+                    found += 1
+                    self._register_device(result)
         logger.info("Discovery complete — %d device(s) found out of %d probed", found, len(candidates))
+
+    def _register_device(self, result: ProbeResult) -> None:
+        """Upsert a discovered device and its outlets into the database."""
+        logger.info("Found PDU: %s (%s)", result.system_name, result.host)
+        with session_scope() as session:
+            device = session.scalar(select(Device).where(Device.host == result.host))
+            if device is None:
+                device = Device(host=result.host)
+                session.add(device)
+            device.name = result.system_name
+            device.model = result.system_description
+            device.status = "online"
+            device.last_seen_at = utcnow()
+            self._ensure_outlets(session, device)
 
     def _probe_host(self, host: str, is_configured: bool = False):
         return SNMPClient(self.settings, host, is_configured=is_configured).probe_device()
@@ -193,7 +219,7 @@ class PDUService:
         known = {outlet.outlet_index: outlet for outlet in device.outlets}
         client = SNMPClient(self.settings, device.host)
         for outlet_index in range(1, self.settings.max_outlets_per_device + 1):
-            raw_state = client.get_int(f"{OUTLET_STATE_BASE_OID}.{outlet_index}")
+            raw_state = client.get_int(f"{OUTLET_CONTROL_BASE_OID}.{outlet_index}")
             if raw_state is None:
                 continue
 
@@ -230,7 +256,7 @@ class PDUService:
         client = SNMPClient(self.settings, device.host)
         any_reachable = False
         for outlet in device.outlets:
-            raw_state = client.get_int(f"{OUTLET_STATE_BASE_OID}.{outlet.outlet_index}")
+            raw_state = client.get_int(f"{OUTLET_CONTROL_BASE_OID}.{outlet.outlet_index}")
             if raw_state is None:
                 continue
 
@@ -303,7 +329,7 @@ class PDUService:
                 return CommandResult(False, "SNMP command was rejected or timed out.")
 
             previous_state = outlet.current_state
-            refreshed_raw = client.get_int(f"{OUTLET_STATE_BASE_OID}.{outlet.outlet_index}")
+            refreshed_raw = client.get_int(f"{OUTLET_CONTROL_BASE_OID}.{outlet.outlet_index}")
             if refreshed_raw is not None:
                 outlet.raw_state = refreshed_raw
                 outlet.current_state = self._decode_state(refreshed_raw)
