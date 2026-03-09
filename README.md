@@ -51,3 +51,4 @@ This code keeps the operator UI non-technical. Credential sourcing still needs a
 2. Add vendor-specific device fingerprints and richer outlet metadata.
 3. Add authentication and audit enrichment if multiple operator roles will use this add-on.
 4. Add integration tests with an SNMP simulator before commercial rollout.
+# pdu
