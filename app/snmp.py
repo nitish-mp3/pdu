@@ -151,16 +151,12 @@ class SNMPClient:
             return None
 
     def _probe_device_inner(self) -> ProbeResult | None:
-        system_description = self.get_string(SYS_DESCR_OID)
-        if not system_description:
-            return None
-
         outlet_one_state = self.get_int(f"{OUTLET_CONTROL_BASE_OID}.1")
-        is_apc_like = "apc" in system_description.lower() or outlet_one_state is not None
-        if not is_apc_like:
+        if outlet_one_state is None:
             return None
 
         system_name = self.get_string(SYS_NAME_OID) or f"PDU {self._host}"
+        system_description = self.get_string(SYS_DESCR_OID) or f"APC PDU at {self._host}"
         return ProbeResult(
             host=self._host,
             system_name=system_name,
