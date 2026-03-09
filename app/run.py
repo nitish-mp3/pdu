@@ -1,15 +1,16 @@
-"""Startup entrypoint with port fallback and logging setup."""
+"""Startup entrypoint with port wait-retry logic and logging setup."""
 from __future__ import annotations
 
 import logging
 import os
 import socket
 import sys
+import time
 from pathlib import Path
 
-DEFAULT_PORT = 8023
-FALLBACK_PORTS = [8024, 8025, 8026, 8080, 9000]
+PORT = 8023
 HOST = "0.0.0.0"  # must be 0.0.0.0 so HA Supervisor ingress proxy can reach the container
+PORT_WAIT_SECONDS = 20  # wait up to 20s for the previous add-on instance to release the port
 DATA_DIR = Path(os.getenv("PDU_GUARD_DATA_DIR", "/data"))
 
 
@@ -22,26 +23,38 @@ def _setup_logging() -> None:
     )
 
 
-def _port_available(host: str, port: int) -> bool:
+def _port_free(host: str, port: int) -> bool:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((host, port))
         return True
     except OSError:
         return False
 
 
-def _pick_port() -> int:
-    if _port_available(HOST, DEFAULT_PORT):
-        return DEFAULT_PORT
-    logger = logging.getLogger(__name__)
-    logger.warning("Port %d is in use, trying fallbacks", DEFAULT_PORT)
-    for port in FALLBACK_PORTS:
-        if _port_available(HOST, port):
-            logger.info("Using fallback port %d", port)
-            return port
-    logger.error("No available port found; falling back to %d anyway", DEFAULT_PORT)
-    return DEFAULT_PORT
+def _wait_for_port(logger: logging.Logger) -> None:
+    """Block until PORT is available or exit so HA shows a real failure."""
+    if _port_free(HOST, PORT):
+        return
+    logger.warning(
+        "Port %d is already in use (previous instance still shutting down). "
+        "Waiting up to %ds...",
+        PORT, PORT_WAIT_SECONDS,
+    )
+    deadline = time.monotonic() + PORT_WAIT_SECONDS
+    while time.monotonic() < deadline:
+        time.sleep(1)
+        if _port_free(HOST, PORT):
+            logger.info("Port %d is now free.", PORT)
+            return
+    logger.error(
+        "Port %d still in use after %ds. "
+        "Cannot start — ingress_port in config.yaml must match the listening port. "
+        "Exiting so HA shows a proper failure instead of silent 502.",
+        PORT, PORT_WAIT_SECONDS,
+    )
+    sys.exit(1)
 
 
 def main() -> None:
@@ -50,16 +63,16 @@ def main() -> None:
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    port = _pick_port()
-    logger.info("Starting PDU Outlet Guard on %s:%d", HOST, port)
+    _wait_for_port(logger)
+    logger.info("Starting PDU Outlet Guard on %s:%d", HOST, PORT)
 
     try:
-        import uvicorn  # noqa: delayed import after logging is configured
+        import uvicorn
 
         uvicorn.run(
             "main:app",
             host=HOST,
-            port=port,
+            port=PORT,
             log_level="info",
             access_log=False,
         )

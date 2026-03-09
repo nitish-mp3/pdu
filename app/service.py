@@ -115,9 +115,10 @@ class PDUService:
             return
 
         found = 0
+        configured_set = set(self.settings.pdu_hosts)
         with ThreadPoolExecutor(max_workers=self.settings.scan_workers) as executor:
             futures = {
-                executor.submit(self._probe_host, host): host
+                executor.submit(self._probe_host, host, host in configured_set): host
                 for host in candidates
             }
             for future in as_completed(futures):
@@ -142,8 +143,8 @@ class PDUService:
                     self._ensure_outlets(session, device)
         logger.info("Discovery complete — %d device(s) found out of %d probed", found, len(candidates))
 
-    def _probe_host(self, host: str):
-        return SNMPClient(self.settings, host).probe_device()
+    def _probe_host(self, host: str, is_configured: bool = False):
+        return SNMPClient(self.settings, host, is_configured=is_configured).probe_device()
 
     def _candidate_hosts(self) -> list[str]:
         hosts: list[str] = []

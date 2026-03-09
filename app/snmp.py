@@ -48,9 +48,12 @@ class ProbeResult:
 
 
 class SNMPClient:
-    def __init__(self, settings: Settings, host: str):
+    def __init__(self, settings: Settings, host: str, is_configured: bool = False):
         self._settings = settings
         self._host = host
+        # Configured hosts (from pdu_hosts list) produce WARNING-level SNMP errors so
+        # they appear in the add-on log. Scanned hosts use DEBUG to avoid flooding logs.
+        self._log_level = logging.WARNING if is_configured else logging.DEBUG
 
     def _auth(self) -> UsmUserData:
         return UsmUserData(
@@ -78,12 +81,24 @@ class SNMPClient:
                 ObjectType(ObjectIdentity(oid)),
             )
 
-            error_indication, error_status, _error_index, var_binds = next(iterator)
-            if error_indication or error_status:
+            error_indication, error_status, error_index, var_binds = next(iterator)
+            if error_indication:
+                logger.log(
+                    self._log_level,
+                    "SNMP error_indication for %s on %s: %s",
+                    oid, self._host, error_indication,
+                )
+                return None
+            if error_status:
+                logger.log(
+                    self._log_level,
+                    "SNMP error_status for %s on %s: %s at index %s",
+                    oid, self._host, error_status.prettyPrint(), error_index,
+                )
                 return None
             return var_binds[0][1]
         except Exception:
-            logger.debug("SNMP GET failed for %s on %s", oid, self._host, exc_info=True)
+            logger.log(self._log_level, "SNMP GET failed for %s on %s", oid, self._host, exc_info=True)
             return None
 
     def get_int(self, oid: str) -> int | None:
@@ -120,7 +135,7 @@ class SNMPClient:
         try:
             return self._probe_device_inner()
         except Exception:
-            logger.debug("Probe failed for %s", self._host, exc_info=True)
+            logger.log(self._log_level, "Probe failed for %s", self._host, exc_info=True)
             return None
 
     def _probe_device_inner(self) -> ProbeResult | None:
