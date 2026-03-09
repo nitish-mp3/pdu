@@ -350,10 +350,10 @@ async function confirmAndSetLock(outletId, locked, outletName) {
 
 discoverButton.addEventListener("click", async () => {
     await withBusyState(async () => {
-        setStatus("Scanning local networks for compatible PDUs\u2026");
-        await requestJson("api/devices/discover", { method: "POST" });
-        showToast("Discovery scan complete.", "success");
-        await loadOverview();
+        setStatus("Discovery scan triggered\u2026");
+        const result = await requestJson("api/devices/discover", { method: "POST" });
+        showToast(result.message || "Discovery started — devices will appear shortly.", "info");
+        setTimeout(() => void loadOverview(), 5000);
     });
 });
 

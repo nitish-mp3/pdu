@@ -5,7 +5,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -71,9 +71,9 @@ def overview() -> dict:
 
 
 @app.post("/api/devices/discover")
-def discover() -> dict:
-    service.discover_devices()
-    return {"ok": True}
+def discover(background_tasks: BackgroundTasks) -> dict:
+    background_tasks.add_task(service.discover_devices)
+    return {"ok": True, "message": "Discovery started in background."}
 
 
 @app.post("/api/outlets/{outlet_id}/command")

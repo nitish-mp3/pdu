@@ -49,6 +49,13 @@ class PDUService:
         data_dir.mkdir(parents=True, exist_ok=True)
         Base.metadata.create_all(bind=engine)
         logger.info("Database initialized at %s", self.settings.database_path)
+        logger.info(
+            "Config: snmp_user=%s, pdu_hosts=%s, snmp_port=%d, credentials_set=%s",
+            self.settings.snmp_username or "(empty)",
+            list(self.settings.pdu_hosts) or "(none)",
+            self.settings.snmp_port,
+            self._credentials_ready,
+        )
 
     async def run(self) -> None:
         while not self._stop_event.is_set():
@@ -66,6 +73,7 @@ class PDUService:
 
     def sync_once(self) -> None:
         if not self._credentials_ready:
+            logger.warning("SNMP credentials not configured — skipping sync. Set them in the add-on Configuration tab.")
             return
 
         now = utcnow()
@@ -98,10 +106,15 @@ class PDUService:
         )
 
     def discover_devices(self) -> None:
+        if not self._credentials_ready:
+            logger.warning("Discovery skipped — SNMP credentials not configured.")
+            return
         candidates = self._candidate_hosts()
+        logger.info("Discovery starting — %d candidate host(s) to probe", len(candidates))
         if not candidates:
             return
 
+        found = 0
         with ThreadPoolExecutor(max_workers=self.settings.scan_workers) as executor:
             futures = {
                 executor.submit(self._probe_host, host): host
@@ -115,6 +128,8 @@ class PDUService:
                     continue
                 if result is None:
                     continue
+                found += 1
+                logger.info("Found PDU: %s (%s)", result.system_name, result.host)
                 with session_scope() as session:
                     device = session.scalar(select(Device).where(Device.host == result.host))
                     if device is None:
@@ -125,6 +140,7 @@ class PDUService:
                     device.status = "online"
                     device.last_seen_at = utcnow()
                     self._ensure_outlets(session, device)
+        logger.info("Discovery complete — %d device(s) found out of %d probed", found, len(candidates))
 
     def _probe_host(self, host: str):
         return SNMPClient(self.settings, host).probe_device()

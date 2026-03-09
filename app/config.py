@@ -14,9 +14,13 @@ OPTIONS_PATH = Path(os.getenv("PDU_GUARD_OPTIONS_PATH", "/data/options.json"))
 def _load_options() -> dict:
     try:
         if OPTIONS_PATH.is_file():
-            return json.loads(OPTIONS_PATH.read_text())
+            data = json.loads(OPTIONS_PATH.read_text())
+            safe_keys = {k: ("***" if "password" in k.lower() or "key" in k.lower() else v) for k, v in data.items()}
+            logger.info("Loaded options from %s: %s", OPTIONS_PATH, safe_keys)
+            return data
     except Exception:
         logger.warning("Could not read %s, falling back to env vars", OPTIONS_PATH)
+    logger.info("No options file found at %s — using env vars / defaults", OPTIONS_PATH)
     return {}
 
 
