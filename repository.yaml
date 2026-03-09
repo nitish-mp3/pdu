@@ -1,0 +1,28 @@
+name: PDU Add-on Repository
+url: https://github.com/nitish-mp3/pdu
+maintainer: Nitish
+
+addons:
+  - slug: pdu_outlet_guard
+    name: PDU Outlet Guard
+    description: Operator-first APC PDU control with discovery, outlet history, and remote-off locks.
+    version: "0.1.0"
+    url: https://github.com/nitish-mp3/pdu
+    startup: services
+    boot: auto
+    init: false
+    ingress: true
+    ingress_port: 8023
+    panel_icon: mdi:power-socket-eu
+    panel_title: PDU Guard
+    host_network: true
+    map:
+      - data:rw
+    ports:
+      8023: 8023/tcp
+    arch:
+      - aarch64
+      - amd64
+      - armhf
+      - armv7
+      - i386

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDU Outlet Guard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="shell">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">Home Assistant Add-on</p>
+                <h1>PDU Outlet Guard</h1>
+                <p class="hero-copy">Live APC-style outlet operations with state history and protected remote-off locks.</p>
+            </div>
+            <div class="hero-actions">
+                <button id="refreshButton" class="button secondary">Refresh</button>
+                <button id="discoverButton" class="button primary">Discover Devices</button>
+            </div>
+        </header>
+
+        <section class="summary-grid" id="summaryGrid"></section>
+
+        <main class="content-grid">
+            <section>
+                <div class="section-heading">
+                    <h2>Devices</h2>
+                    <p id="statusMessage">Loading current state...</p>
+                </div>
+                <div id="devicesContainer" class="device-list"></div>
+            </section>
+
+            <section>
+                <div class="section-heading">
+                    <h2>Recent Activity</h2>
+                    <p>Automatic polls, operator actions, and lock changes.</p>
+                </div>
+                <div id="historyContainer" class="history-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <template id="summaryCardTemplate">
+        <article class="summary-card">
+            <p class="summary-label"></p>
+            <p class="summary-value"></p>
+        </article>
+    </template>
+
+    <template id="deviceCardTemplate">
+        <article class="device-card">
+            <div class="device-card__header">
+                <div>
+                    <p class="device-title"></p>
+                    <p class="device-meta"></p>
+                </div>
+                <span class="status-pill"></span>
+            </div>
+            <div class="outlet-grid"></div>
+        </article>
+    </template>
+
+    <template id="outletCardTemplate">
+        <article class="outlet-card">
+            <div class="outlet-card__top">
+                <div>
+                    <p class="outlet-name"></p>
+                    <p class="outlet-meta"></p>
+                </div>
+                <span class="lock-badge"></span>
+            </div>
+            <p class="state-badge"></p>
+            <div class="outlet-actions">
+                <button class="button small success" data-action="on">On</button>
+                <button class="button small danger" data-action="off">Off</button>
+                <button class="button small warning" data-action="reboot">Reboot</button>
+                <button class="button small ghost" data-action="toggle-lock"></button>
+            </div>
+        </article>
+    </template>
+
+    <template id="historyItemTemplate">
+        <article class="history-item">
+            <div>
+                <p class="history-title"></p>
+                <p class="history-meta"></p>
+            </div>
+            <p class="history-message"></p>
+        </article>
+    </template>
+
+    <div id="modalOverlay" class="modal-overlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true">
+            <h3 class="modal-title"></h3>
+            <p class="modal-message"></p>
+            <div class="modal-actions">
+                <button class="button secondary modal-cancel">Cancel</button>
+                <button class="button primary modal-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <script src="/static/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+:root {
+    --bg: #f2efe8;
+    --bg-panel: rgba(255, 252, 246, 0.88);
+    --bg-strong: #fffaf0;
+    --text: #172026;
+    --muted: #59666f;
+    --line: rgba(23, 32, 38, 0.12);
+    --accent: #0f766e;
+    --accent-strong: #115e59;
+    --danger: #b42318;
+    --warning: #c26d00;
+    --success: #1c7c54;
+    --shadow: 0 18px 40px rgba(41, 48, 54, 0.12);
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --font-display: "Segoe UI Variable Display", "Aptos Display", "Trebuchet MS", sans-serif;
+    --font-body: "Segoe UI", "Aptos", sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    color: var(--text);
+    background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 32%),
+        radial-gradient(circle at top right, rgba(194, 109, 0, 0.12), transparent 28%),
+        linear-gradient(180deg, #ebe4d6 0%, var(--bg) 54%, #ece8e2 100%);
+}
+
+.shell {
+    width: min(1400px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 28px 0 44px;
+}
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(255, 250, 240, 0.88), rgba(248, 245, 236, 0.78));
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+}
+
+.eyebrow,
+.section-heading p,
+.device-meta,
+.outlet-meta,
+.history-meta,
+#statusMessage {
+    color: var(--muted);
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.76rem;
+}
+
+h1,
+h2,
+.summary-value,
+.device-title,
+.outlet-name,
+.history-title {
+    margin: 0;
+    font-family: var(--font-display);
+}
+
+h1 {
+    font-size: clamp(2.2rem, 4vw, 4rem);
+    line-height: 0.95;
+}
+
+.hero-copy {
+    width: min(680px, 100%);
+    margin: 14px 0 0;
+    line-height: 1.5;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.summary-card,
+.device-card,
+.history-item {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+}
+
+.summary-card {
+    padding: 18px 20px;
+}
+
+.summary-label {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.summary-value {
+    font-size: 2rem;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+    gap: 24px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.section-heading h2 {
+    font-size: 1.5rem;
+}
+
+.device-list,
+.history-list {
+    display: grid;
+    gap: 16px;
+}
+
+.device-card {
+    padding: 20px;
+}
+
+.device-card__header,
+.outlet-card__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.device-title {
+    font-size: 1.3rem;
+}
+
+.device-meta,
+.outlet-meta,
+.history-meta,
+#statusMessage,
+.section-heading p,
+.history-message {
+    margin: 6px 0 0;
+    line-height: 1.4;
+    font-size: 0.92rem;
+}
+
+.status-pill,
+.state-badge,
+.lock-badge {
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+}
+
+.status-pill[data-status="online"],
+.state-badge[data-state="on"] {
+    background: rgba(28, 124, 84, 0.14);
+    color: var(--success);
+}
+
+.status-pill[data-status="offline"],
+.state-badge[data-state="off"] {
+    background: rgba(180, 35, 24, 0.12);
+    color: var(--danger);
+}
+
+.state-badge[data-state^="unknown"],
+.state-badge[data-state="rebooting"] {
+    background: rgba(194, 109, 0, 0.12);
+    color: var(--warning);
+}
+
+.lock-badge[data-locked="true"] {
+    background: rgba(15, 118, 110, 0.14);
+    color: var(--accent-strong);
+}
+
+.lock-badge[data-locked="false"] {
+    background: rgba(23, 32, 38, 0.08);
+    color: var(--muted);
+}
+
+.outlet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.outlet-card {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(248, 245, 238, 0.82));
+    border: 1px solid rgba(23, 32, 38, 0.08);
+}
+
+.state-badge {
+    display: inline-block;
+    margin: 14px 0 14px;
+}
+
+.outlet-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.button {
+    border: none;
+    border-radius: 999px;
+    padding: 12px 16px;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+}
+
+.button:hover {
+    transform: translateY(-1px);
+}
+
+.button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.button.primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.button.secondary,
+.button.ghost {
+    background: rgba(23, 32, 38, 0.08);
+    color: var(--text);
+}
+
+.button.success,
+.button.small.success {
+    background: rgba(28, 124, 84, 0.14);
+    color: var(--success);
+}
+
+.button.danger,
+.button.small.danger {
+    background: rgba(180, 35, 24, 0.12);
+    color: var(--danger);
+}
+
+.button.warning,
+.button.small.warning {
+    background: rgba(194, 109, 0, 0.14);
+    color: var(--warning);
+}
+
+.button.small,
+.button.small.ghost,
+.button.small.success,
+.button.small.danger,
+.button.small.warning {
+    padding: 9px 12px;
+    font-size: 0.9rem;
+}
+
+.history-item {
+    padding: 16px 18px;
+}
+
+.history-title {
+    font-size: 1rem;
+}
+
+.history-message {
+    color: var(--text);
+}
+
+.empty-state {
+    padding: 24px;
+    border: 1px dashed rgba(23, 32, 38, 0.18);
+    border-radius: var(--radius-md);
+    color: var(--muted);
+    text-align: center;
+    background: rgba(255, 252, 246, 0.6);
+}
+
+@media (max-width: 980px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 640px) {
+    .shell {
+        width: min(100% - 20px, 1400px);
+        padding-top: 16px;
+    }
+
+    .hero,
+    .device-card,
+    .summary-card,
+    .history-item {
+        padding: 18px;
+    }
+
+    .section-heading {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .outlet-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Confirmation modal ─── */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(23, 32, 38, 0.48);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    width: calc(100% - 40px);
+    max-width: 440px;
+    padding: 28px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-strong);
+    box-shadow: 0 24px 64px rgba(23, 32, 38, 0.28);
+    transform: scale(0.92) translateY(8px);
+    transition: transform 180ms ease;
+}
+
+.modal-overlay.visible .modal {
+    transform: scale(1) translateY(0);
+}
+
+.modal-title {
+    margin: 0 0 12px;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+}
+
+.modal-title.danger {
+    color: var(--danger);
+}
+
+.modal-title.warning {
+    color: var(--warning);
+}
+
+.modal-message {
+    margin: 0 0 24px;
+    line-height: 1.55;
+    color: var(--text);
+    font-size: 0.96rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Solid button variants for modal confirm */
+
+.button.danger-solid {
+    background: var(--danger);
+    color: #fff;
+}
+
+.button.warning-solid {
+    background: var(--warning);
+    color: #fff;
+}
+
+.button.success-solid {
+    background: var(--success);
+    color: #fff;
+}
+
+/* ─── Toast notifications ─── */
+
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    pointer-events: none;
+    max-width: 380px;
+}
+
+.toast {
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.92rem;
+    line-height: 1.4;
+    pointer-events: auto;
+    animation: toast-in 250ms ease;
+    box-shadow: 0 8px 24px rgba(23, 32, 38, 0.18);
+}
+
+.toast-success {
+    background: #ecfdf5;
+    color: var(--success);
+    border-left: 4px solid var(--success);
+}
+
+.toast-error {
+    background: #fef2f2;
+    color: var(--danger);
+    border-left: 4px solid var(--danger);
+}
+
+.toast-info {
+    background: var(--bg-strong);
+    color: var(--text);
+    border-left: 4px solid var(--accent);
+}
+
+.toast.leaving {
+    animation: toast-out 220ms ease forwards;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(8px) scale(0.94); }
+}
+
+/* ─── Busy / loading states ─── */
+
+body.busy .outlet-actions button {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+body.busy .button.primary,
+body.busy .button.secondary {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+@media (max-width: 640px) {
+    .toast-container {
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+
+    .modal {
+        padding: 22px;
+    }
+}
